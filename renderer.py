@@ -13,6 +13,8 @@ class HTMLRenderer:
         elif node.type == NodeType.WIKILINK:
             display_text = node.alias if node.alias else node.target
             return f'<a href="{node.target}">{display_text}</a>'
+        elif node.type == NodeType.ITALIC:
+            return f"<em>{self.render_children(node)}</em>"
         else:
             # Fallback for unknown nodes
             return self.render_children(node)

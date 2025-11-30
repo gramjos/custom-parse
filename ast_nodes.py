@@ -14,6 +14,7 @@ class NodeType(Enum):
     LIST_ITEM = auto()
     TEXT = auto()
     WIKILINK = auto()  # Obsidian specific
+    ITALIC = auto()
 
 # 2. Base Node
 @dataclass
@@ -64,3 +65,8 @@ class WikiLink(Node):
         super().__init__(NodeType.WIKILINK)
         self.target = target
         self.alias = alias
+
+@dataclass
+class Italic(Node):
+    def __init__(self):
+        super().__init__(NodeType.ITALIC)

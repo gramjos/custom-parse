@@ -66,6 +66,35 @@ class TestMarkdownParser(unittest.TestCase):
         expected_html = '<p>Link 1 <a href="A">A</a> and Link 2 <a href="B">Alias B</a></p>'
         self.assertEqual(html, expected_html)
 
+    def test_italics(self):
+        markdown = "This is *italic* text."
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>This is <em>italic</em> text.</p>'
+        self.assertEqual(html, expected_html)
+
+    def test_italics_underscore(self):
+        markdown = "This is _italic_ text."
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>This is <em>italic</em> text.</p>'
+        self.assertEqual(html, expected_html)
+
+    def test_italics_in_heading(self):
+        markdown = "# Hello *World*"
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<h1>Hello <em>World</em></h1>'
+        self.assertEqual(html, expected_html)
+
+    def test_mixed_inline(self):
+        markdown = "Click [[Link]] or read *this*."
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>Click <a href="Link">Link</a> or read <em>this</em>.</p>'
+        self.assertEqual(html, expected_html)
+
+
 
 if __name__ == '__main__':
     unittest.main()
