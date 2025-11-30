@@ -27,6 +27,38 @@ class Node:
     def add(self, node: 'Node'):
         self.children.append(node)
 
+    def pretty(self, level: int = 0) -> str:
+        indent = "  " * level
+        name = self.__class__.__name__
+        
+        details = []
+        if self.content:
+            details.append(f"content={repr(self.content)}")
+        
+        if hasattr(self, 'level'):
+            details.append(f"level={getattr(self, 'level')}")
+        
+        language = getattr(self, 'language', None)
+        if language:
+            details.append(f"language={language}")
+            
+        target = getattr(self, 'target', None)
+        if target:
+            details.append(f"target={target}")
+            
+        alias = getattr(self, 'alias', None)
+        if alias:
+            details.append(f"alias={alias}")
+            
+        detail_str = f" ({', '.join(details)})" if details else ""
+        
+        result = f"{indent}{name}{detail_str}\n"
+        
+        for child in self.children:
+            result += child.pretty(level + 1)
+            
+        return result
+
 # 3. Block Nodes
 @dataclass
 class Document(Node):

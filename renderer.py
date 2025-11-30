@@ -1,4 +1,4 @@
-from ast_nodes import Node, Document, Heading, Paragraph, Text, WikiLink, Italic
+from ast_nodes import Node, Document, Heading, Paragraph, Text, WikiLink, Italic, Bold, CodeBlock
 from visitor import NodeVisitor
 
 class HTMLRenderer(NodeVisitor):
@@ -27,6 +27,16 @@ class HTMLRenderer(NodeVisitor):
     def visit_Italic(self, node: Italic) -> str:
         content = self._render_children(node)
         return f"<em>{content}</em>"
+
+    def visit_Bold(self, node: Bold) -> str:
+        content = self._render_children(node)
+        return f"<strong>{content}</strong>"
+
+    def visit_CodeBlock(self, node: CodeBlock) -> str:
+        content = self._render_children(node)
+        # Escape HTML entities if needed, but for now just wrap
+        class_attr = f' class="language-{node.language}"' if node.language else ""
+        return f'<pre><code{class_attr}>{content}</code></pre>'
 
     def generic_visit(self, node: Node) -> str:
         # Fallback for unimplemented nodes (like Lists/BlockQuotes if they appear)

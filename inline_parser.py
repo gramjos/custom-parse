@@ -1,6 +1,6 @@
 import re
 from typing import List
-from ast_nodes import Node, Text, WikiLink, Italic
+from ast_nodes import Node, Text, WikiLink, Italic, Bold
 
 class InlineParser:
     # --- Regex Construction ---
@@ -11,18 +11,23 @@ class InlineParser:
     # Group 3: Alias (optional)
     wikilink_pattern = r'(\[\[(.*?)(?:\|(.*?))?\]\])'
 
-    # 2. Italic: *text*
+    # 2. Bold: __text__
     # Group 4: Full match
     # Group 5: Content
-    italic_star_pattern = r'(\*(.+?)\*)'
+    bold_pattern = r'(__(\S.+?)__)'
 
-    # 3. Italic: _text_
+    # 3. Italic: *text*
     # Group 6: Full match
     # Group 7: Content
+    italic_star_pattern = r'(\*(.+?)\*)'
+
+    # 4. Italic: _text_
+    # Group 8: Full match
+    # Group 9: Content
     italic_underscore_pattern = r'(_(.+?)_)'
 
     # Combine and compile
-    TOKEN_RE = re.compile(f'{wikilink_pattern}|{italic_star_pattern}|{italic_underscore_pattern}')
+    TOKEN_RE = re.compile(f'{wikilink_pattern}|{bold_pattern}|{italic_star_pattern}|{italic_underscore_pattern}')
 
     def parse(self, text: str) -> List[Node]:
         nodes = []
@@ -42,13 +47,18 @@ class InlineParser:
                 target = match.group(2)
                 alias = match.group(3)
                 nodes.append(WikiLink(target, alias))
-            elif match.group(4): # Italic (star)
+            elif match.group(4): # Bold
                 content = match.group(5)
+                bold = Bold()
+                bold.add(Text(content))
+                nodes.append(bold)
+            elif match.group(6): # Italic (star)
+                content = match.group(7)
                 italic = Italic()
                 italic.add(Text(content))
                 nodes.append(italic)
-            elif match.group(6): # Italic (underscore)
-                content = match.group(7)
+            elif match.group(8): # Italic (underscore)
+                content = match.group(9)
                 italic = Italic()
                 italic.add(Text(content))
                 nodes.append(italic)

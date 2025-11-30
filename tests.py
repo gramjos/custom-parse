@@ -18,7 +18,8 @@ class TestMarkdownParser(unittest.TestCase):
         markdown = "This is a paragraph.\nAnother paragraph."
         doc = self.parser.parse(markdown)
         html = self.renderer.render(doc)
-        expected_html = "<p>This is a paragraph.</p><p>Another paragraph.</p>"
+        # Refactored parser treats consecutive lines as a single paragraph (standard Markdown)
+        expected_html = "<p>This is a paragraph. Another paragraph.</p>"
         self.assertEqual(html, expected_html)
 
     def test_mixed_content(self):
@@ -87,12 +88,38 @@ class TestMarkdownParser(unittest.TestCase):
         expected_html = '<h1>Hello <em>World</em></h1>'
         self.assertEqual(html, expected_html)
 
+    def test_bold(self):
+        markdown = "This is __bold__ text."
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>This is <strong>bold</strong> text.</p>'
+        self.assertEqual(html, expected_html)
+
+    def test_mixed_bold_italic(self):
+        markdown = "This is __bold__ and _italic_."
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>This is <strong>bold</strong> and <em>italic</em>.</p>'
+        self.assertEqual(html, expected_html)
+
     def test_mixed_inline(self):
         markdown = "Click [[Link]] or read *this*."
         doc = self.parser.parse(markdown)
         html = self.renderer.render(doc)
         expected_html = '<p>Click <a href="Link">Link</a> or read <em>this</em>.</p>'
         self.assertEqual(html, expected_html)
+
+    def test_code_block(self):
+        markdown = "```python\nprint('Hello')\n```"
+        doc = self.parser.parse(markdown)
+        # Check AST directly since renderer support is not guaranteed/requested
+        from ast_nodes import CodeBlock, Text
+        self.assertEqual(len(doc.children), 1)
+        self.assertIsInstance(doc.children[0], CodeBlock)
+        self.assertEqual(doc.children[0].language, "python")
+        self.assertEqual(len(doc.children[0].children), 1)
+        self.assertIsInstance(doc.children[0].children[0], Text)
+        self.assertEqual(doc.children[0].children[0].content, "print('Hello')")
 
 
 
