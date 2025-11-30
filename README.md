@@ -1,4 +1,31 @@
-Techincal Notes:
+# Obsidian Markdown to HTML
+
+## Usage
+
+### `ctags`
+```zsh
+ctags -R --languages=Python \
+  --exclude=.git \
+  --exclude=.venv \
+  --exclude=__pycache__ \
+  --exclude=build \
+  --exclude=dist \
+  --exclude='*.egg-info' \
+  --exclude=output_html \
+  --exclude=test_data
+```
+
+To run the parser on the sample input:
+```bash
+python3 main.py
+```
+
+To run the batch converter:
+```bash
+python3 batch_converter.py
+```
+
+## Technical Notes:
 Dataclasses:
 	Default factory:
 

@@ -45,5 +45,27 @@ class TestMarkdownParser(unittest.TestCase):
         expected_html = "<h1>H1</h1><h6>H6</h6><h6># Not H7</h6>" 
         self.assertEqual(html, expected_html)
 
+    def test_wikilinks(self):
+        markdown = "Hello [[World]]"
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>Hello <a href="World">World</a></p>'
+        self.assertEqual(html, expected_html)
+
+    def test_wikilinks_with_alias(self):
+        markdown = "Click [[Page|Here]] For more info."
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>Click <a href="Page">Here</a> For more info.</p>'
+        self.assertEqual(html, expected_html)
+
+    def test_multiple_wikilinks(self):
+        markdown = "Link 1 [[A]] and Link 2 [[B|Alias B]]"
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = '<p>Link 1 <a href="A">A</a> and Link 2 <a href="B">Alias B</a></p>'
+        self.assertEqual(html, expected_html)
+
+
 if __name__ == '__main__':
     unittest.main()

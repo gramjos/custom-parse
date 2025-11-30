@@ -10,6 +10,9 @@ class HTMLRenderer:
             return f"<p>{self.render_children(node)}</p>"
         elif node.type == NodeType.TEXT:
             return node.content or ""
+        elif node.type == NodeType.WIKILINK:
+            display_text = node.alias if node.alias else node.target
+            return f'<a href="{node.target}">{display_text}</a>'
         else:
             # Fallback for unknown nodes
             return self.render_children(node)
