@@ -3,10 +3,10 @@ from renderer import HTMLRenderer
 
 def main():
     input_markdown = """
-# Hello World
-This is a paragraph.
-## Subheading
-Another paragraph.
+# Hello *World*
+_This_ is a *paragraph*.
+## _Subheading_ Here!
+Another __paragraph__.
     """
     
     # 1. Parse

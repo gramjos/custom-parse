@@ -1,23 +1,37 @@
-from ast_nodes import NodeType, Node
+from ast_nodes import Node, Document, Heading, Paragraph, Text, WikiLink, Italic
+from visitor import NodeVisitor
 
-class HTMLRenderer:
+class HTMLRenderer(NodeVisitor):
     def render(self, node: Node) -> str:
-        if node.type == NodeType.DOCUMENT:
-            return "".join([self.render(child) for child in node.children])
-        elif node.type == NodeType.HEADING:
-            return f"<h{node.level}>{self.render_children(node)}</h{node.level}>"
-        elif node.type == NodeType.PARAGRAPH:
-            return f"<p>{self.render_children(node)}</p>"
-        elif node.type == NodeType.TEXT:
-            return node.content or ""
-        elif node.type == NodeType.WIKILINK:
-            display_text = node.alias if node.alias else node.target
-            return f'<a href="{node.target}">{display_text}</a>'
-        elif node.type == NodeType.ITALIC:
-            return f"<em>{self.render_children(node)}</em>"
-        else:
-            # Fallback for unknown nodes
-            return self.render_children(node)
+        """Entry point for the renderer."""
+        return self.visit(node)
 
-    def render_children(self, node: Node) -> str:
-        return "".join([self.render(child) for child in node.children])
+    def visit_Document(self, node: Document) -> str:
+        return "".join(self.visit(child) for child in node.children)
+
+    def visit_Heading(self, node: Heading) -> str:
+        content = self._render_children(node)
+        return f"<h{node.level}>{content}</h{node.level}>"
+
+    def visit_Paragraph(self, node: Paragraph) -> str:
+        content = self._render_children(node)
+        return f"<p>{content}</p>"
+
+    def visit_Text(self, node: Text) -> str:
+        return node.content or ""
+
+    def visit_WikiLink(self, node: WikiLink) -> str:
+        display_text = node.alias if node.alias else node.target
+        return f'<a href="{node.target}">{display_text}</a>'
+
+    def visit_Italic(self, node: Italic) -> str:
+        content = self._render_children(node)
+        return f"<em>{content}</em>"
+
+    def generic_visit(self, node: Node) -> str:
+        # Fallback for unimplemented nodes (like Lists/BlockQuotes if they appear)
+        return self._render_children(node)
+
+    def _render_children(self, node: Node) -> str:
+        """Helper to visit all children and join their results."""
+        return "".join(self.visit(child) for child in node.children)

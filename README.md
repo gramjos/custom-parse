@@ -1,6 +1,9 @@
 # Obsidian Markdown to HTML
 
-## Usage
+## Parsing Rules
+### Block
+- Headings
+  - Can Contain: italic, code font (back ticks)
 
 ### `ctags`
 ```zsh
@@ -15,6 +18,7 @@ ctags -R --languages=Python \
   --exclude=test_data
 ```
 
+## Usage
 To run the parser on the sample input:
 ```bash
 python3 main.py
