@@ -1,9 +1,14 @@
 import re
 from typing import List
-from ast_nodes import Node, Text, WikiLink, Italic, Bold
+from ast_nodes import Node, Text, WikiLink, Italic, Bold, InlineCode
 
 class InlineParser:
     # --- Regex Construction ---
+
+    # 0. Inline Code: `text`
+    # Group 10: Full match
+    # Group 11: Content
+    inline_code_pattern = r'(`([^`]+)`)'
 
     # 1. WikiLink: [[Target]] or [[Target|Alias]]
     # Group 1: Full match
@@ -27,7 +32,7 @@ class InlineParser:
     italic_underscore_pattern = r'(_(.+?)_)'
 
     # Combine and compile
-    TOKEN_RE = re.compile(f'{wikilink_pattern}|{bold_pattern}|{italic_star_pattern}|{italic_underscore_pattern}')
+    TOKEN_RE = re.compile(f'{inline_code_pattern}|{wikilink_pattern}|{bold_pattern}|{italic_star_pattern}|{italic_underscore_pattern}')
 
     def parse(self, text: str) -> List[Node]:
         nodes = []
@@ -43,22 +48,27 @@ class InlineParser:
                 nodes.append(Text(text_chunk))
             
             # 2. Handle the match
-            if match.group(1): # WikiLink
-                target = match.group(2)
-                alias = match.group(3)
+            if match.group(1): # Inline Code
+                content = match.group(2)
+                code = InlineCode()
+                code.add(Text(content))
+                nodes.append(code)
+            elif match.group(3): # WikiLink
+                target = match.group(4)
+                alias = match.group(5)
                 nodes.append(WikiLink(target, alias))
-            elif match.group(4): # Bold
-                content = match.group(5)
+            elif match.group(6): # Bold
+                content = match.group(7)
                 bold = Bold()
                 bold.add(Text(content))
                 nodes.append(bold)
-            elif match.group(6): # Italic (star)
-                content = match.group(7)
+            elif match.group(8): # Italic (star)
+                content = match.group(9)
                 italic = Italic()
                 italic.add(Text(content))
                 nodes.append(italic)
-            elif match.group(8): # Italic (underscore)
-                content = match.group(9)
+            elif match.group(10): # Italic (underscore)
+                content = match.group(11)
                 italic = Italic()
                 italic.add(Text(content))
                 nodes.append(italic)

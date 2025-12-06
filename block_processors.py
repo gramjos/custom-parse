@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
-from ast_nodes import Node, Heading, CodeBlock, Paragraph, Text
+import re
+from typing import List, Optional, Any
+from ast_nodes import Node, Heading, CodeBlock, Paragraph, Text, ListNode, ListItem, FrontMatter
 
 class LineReader:
     def __init__(self, lines: List[str]):
@@ -30,6 +31,59 @@ class BlockProcessor(ABC):
     @abstractmethod
     def run(self, parent: Node, reader: LineReader) -> Node:
         pass
+
+class FrontMatterProcessor(BlockProcessor):
+    def can_start(self, line: str) -> bool:
+        return line.strip() == '---'
+
+    def run(self, parent: Node, reader: LineReader) -> Node:
+        reader.next() # Consume opening ---
+        meta = {}
+        
+        while reader.has_next():
+            line = reader.peek()
+            if line is None:
+                break
+            
+            if line.strip() == '---':
+                reader.next() # Consume closing ---
+                break
+            
+            content_line = reader.next()
+            if ':' in content_line:
+                key, value = content_line.split(':', 1)
+                key = key.strip()
+                value = value.strip()
+                meta[key] = self._parse_value(value)
+        
+        fm = FrontMatter(meta)
+        parent.add(fm)
+        return fm
+
+    def _parse_value(self, value: str) -> Any:
+        # List
+        if value.startswith('[') and value.endswith(']'):
+            inner = value[1:-1]
+            # Handle empty list
+            if not inner.strip():
+                return []
+            return [self._parse_value(v.strip()) for v in inner.split(',')]
+        
+        # Boolean
+        if value == 'True': return True
+        if value == 'False': return False
+        
+        # String with quotes
+        if (value.startswith("'") and value.endswith("'")) or \
+           (value.startswith('"') and value.endswith('"')):
+            return value[1:-1]
+            
+        # Number
+        if value.isdigit():
+            return int(value)
+            
+        # Default string
+        return value
 
 class HeadingProcessor(BlockProcessor):
     def can_start(self, line: str) -> bool:
@@ -86,6 +140,58 @@ class CodeBlockProcessor(BlockProcessor):
         code_block.add(Text(full_content))
         parent.add(code_block)
         return code_block
+
+class ListProcessor(BlockProcessor):
+    LIST_PATTERN = re.compile(r'^(\s*)([-*+]|\d+\.)\s+(.*)')
+
+    def can_start(self, line: str) -> bool:
+        return bool(self.LIST_PATTERN.match(line))
+
+    def run(self, parent: Node, reader: LineReader) -> Node:
+        first_line = reader.peek()
+        if not first_line:
+            raise ValueError("Unexpected end of input in ListProcessor")
+
+        match = self.LIST_PATTERN.match(first_line)
+        if not match:
+            raise ValueError("ListProcessor started on invalid line")
+        
+        marker = match.group(2)
+        is_ordered = marker[0].isdigit()
+        
+        list_node = ListNode(ordered=is_ordered)
+        
+        while reader.has_next():
+            line = reader.peek()
+            if line is None:
+                break
+            
+            # Check if empty line breaks list? 
+            # Standard markdown: empty lines between items make it a "loose" list.
+            # For now, let's stop on empty line or non-matching line.
+            if not line.strip():
+                break
+
+            match = self.LIST_PATTERN.match(line)
+            if not match:
+                break
+            
+            current_marker = match.group(2)
+            current_is_ordered = current_marker[0].isdigit()
+            
+            # If list type changes (ul <-> ol), break to start a new list block
+            if current_is_ordered != is_ordered:
+                break
+                
+            reader.next() # Consume the line
+            content = match.group(3)
+            
+            item = ListItem()
+            item.add(Text(content))
+            list_node.add(item)
+            
+        parent.add(list_node)
+        return list_node
 
 class ParagraphProcessor(BlockProcessor):
     def can_start(self, line: str) -> bool:

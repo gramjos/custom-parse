@@ -1,13 +1,26 @@
-from ast_nodes import Node, Document, Heading, Paragraph, Text, WikiLink, Italic, Bold, CodeBlock
+from ast_nodes import Node, Document, Heading, Paragraph, Text, WikiLink, Italic, Bold, CodeBlock, ListNode, ListItem, InlineCode, FrontMatter
 from visitor import NodeVisitor
+import os
 
 class HTMLRenderer(NodeVisitor):
     def render(self, node: Node) -> str:
         """Entry point for the renderer."""
         return self.visit(node)
 
+    def get_css(self) -> str:
+        css_path = os.path.join(os.path.dirname(__file__), 'style.css')
+        if os.path.exists(css_path):
+            with open(css_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        return ""
+
     def visit_Document(self, node: Document) -> str:
         return "".join(self.visit(child) for child in node.children)
+
+    def visit_FrontMatter(self, node: FrontMatter) -> str:
+        # Front matter is metadata and usually not rendered to HTML body.
+        # We can return an empty string or a comment.
+        return ""
 
     def visit_Heading(self, node: Heading) -> str:
         content = self._render_children(node)
@@ -37,6 +50,19 @@ class HTMLRenderer(NodeVisitor):
         # Escape HTML entities if needed, but for now just wrap
         class_attr = f' class="language-{node.language}"' if node.language else ""
         return f'<pre><code{class_attr}>{content}</code></pre>'
+
+    def visit_ListNode(self, node: ListNode) -> str:
+        content = self._render_children(node)
+        tag = "ol" if node.ordered else "ul"
+        return f"<{tag}>{content}</{tag}>"
+
+    def visit_ListItem(self, node: ListItem) -> str:
+        content = self._render_children(node)
+        return f"<li>{content}</li>"
+
+    def visit_InlineCode(self, node: InlineCode) -> str:
+        content = self._render_children(node)
+        return f"<code>{content}</code>"
 
     def generic_visit(self, node: Node) -> str:
         # Fallback for unimplemented nodes (like Lists/BlockQuotes if they appear)

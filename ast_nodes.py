@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 from enum import Enum, auto
-#Here
 
 # 1. Node Types
 class NodeType(Enum):
@@ -13,9 +12,11 @@ class NodeType(Enum):
     LIST = auto()
     LIST_ITEM = auto()
     TEXT = auto()
-    WIKILINK = auto()  # Obsidian specific
+    WIKILINK = auto()  
     ITALIC = auto()
     BOLD = auto()
+    INLINE_CODE = auto()
+    FRONT_MATTER = auto()
 
 # 2. Base Node
 @dataclass
@@ -66,6 +67,13 @@ class Document(Node):
         super().__init__(NodeType.DOCUMENT)
 
 @dataclass
+class FrontMatter(Node):
+    meta: dict = field(default_factory=dict)
+    def __init__(self, meta: dict = None):
+        super().__init__(NodeType.FRONT_MATTER)
+        self.meta = meta if meta is not None else {}
+
+@dataclass
 class Heading(Node):
     level: int = 1
     def __init__(self, level: int):
@@ -83,6 +91,18 @@ class CodeBlock(Node):
     def __init__(self, language: str = ""):
         super().__init__(NodeType.CODE_BLOCK)
         self.language = language
+
+@dataclass
+class ListNode(Node):
+    ordered: bool = False
+    def __init__(self, ordered: bool = False):
+        super().__init__(NodeType.LIST)
+        self.ordered = ordered
+
+@dataclass
+class ListItem(Node):
+    def __init__(self):
+        super().__init__(NodeType.LIST_ITEM)
 
 # 4. Inline Nodes
 @dataclass
@@ -108,3 +128,8 @@ class Italic(Node):
 class Bold(Node):
     def __init__(self):
         super().__init__(NodeType.BOLD)
+
+@dataclass
+class InlineCode(Node):
+    def __init__(self):
+        super().__init__(NodeType.INLINE_CODE)

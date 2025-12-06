@@ -1,14 +1,16 @@
 from typing import List
 from ast_nodes import Document, Node, Text
 from inline_parser import InlineParser
-from block_processors import LineReader, HeadingProcessor, CodeBlockProcessor, ParagraphProcessor, BlockProcessor
+from block_processors import LineReader, HeadingProcessor, CodeBlockProcessor, ParagraphProcessor, BlockProcessor, ListProcessor, FrontMatterProcessor
 
 class Parser:
     def __init__(self):
         self.inline_parser = InlineParser()
+        self.front_matter_processor = FrontMatterProcessor()
         self.processors: List[BlockProcessor] = [
             HeadingProcessor(),
             CodeBlockProcessor(),
+            ListProcessor(),
             ParagraphProcessor()
         ]
 
@@ -16,6 +18,10 @@ class Parser:
         doc = Document()
         lines = text.split('\n')
         reader = LineReader(lines)
+        
+        # Check for Front Matter at the very beginning
+        if reader.has_next() and self.front_matter_processor.can_start(reader.peek()):
+            self.front_matter_processor.run(doc, reader)
         
         while reader.has_next():
             line = reader.peek()

@@ -102,6 +102,27 @@ class TestMarkdownParser(unittest.TestCase):
         expected_html = '<p>This is <strong>bold</strong> and <em>italic</em>.</p>'
         self.assertEqual(html, expected_html)
 
+    def test_unordered_list(self):
+        markdown = "- Item 1\n- Item 2\n- Item 3"
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = "<ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>"
+        self.assertEqual(html, expected_html)
+
+    def test_ordered_list(self):
+        markdown = "1. First\n2. Second\n3. Third"
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = "<ol><li>First</li><li>Second</li><li>Third</li></ol>"
+        self.assertEqual(html, expected_html)
+
+    def test_list_with_inline(self):
+        markdown = "- Item *italic*\n- Item __bold__\n- Item `code`"
+        doc = self.parser.parse(markdown)
+        html = self.renderer.render(doc)
+        expected_html = "<ul><li>Item <em>italic</em></li><li>Item <strong>bold</strong></li><li>Item <code>code</code></li></ul>"
+        self.assertEqual(html, expected_html)
+
     def test_mixed_inline(self):
         markdown = "Click [[Link]] or read *this*."
         doc = self.parser.parse(markdown)
@@ -121,7 +142,31 @@ class TestMarkdownParser(unittest.TestCase):
         self.assertIsInstance(doc.children[0].children[0], Text)
         self.assertEqual(doc.children[0].children[0].content, "print('Hello')")
 
+    def test_front_matter(self):
+        markdown = "---\ntitle: Test\ntags: [a, b]\n---\n# Content"
+        doc = self.parser.parse(markdown)
+        
+        # Check AST
+        from ast_nodes import FrontMatter, Heading
+        self.assertIsInstance(doc.children[0], FrontMatter)
+        self.assertEqual(doc.children[0].meta['title'], 'Test')
+        self.assertEqual(doc.children[0].meta['tags'], ['a', 'b'])
+        
+        self.assertIsInstance(doc.children[1], Heading)
+        
+        # Check HTML
+        html = self.renderer.render(doc)
+        expected_html = "<h1>Content</h1>"
+        self.assertEqual(html, expected_html)
 
+    def test_front_matter_only_at_top(self):
+        markdown = "# Content\n---\nkey: value\n---"
+        doc = self.parser.parse(markdown)
+        
+        # Should NOT be FrontMatter
+        from ast_nodes import FrontMatter
+        for child in doc.children:
+            self.assertNotIsInstance(child, FrontMatter)
 
 if __name__ == '__main__':
     unittest.main()

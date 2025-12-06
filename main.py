@@ -7,9 +7,12 @@ def main():
     
     # 1. Parse
     parser = Parser()
+    print(f"The in... {input_markdown=}")
     doc = parser.parse(input_markdown)
     
     print("Parsed AST:")
+    print(doc)
+    print("-" * 20)
     print(doc.pretty())
     print("-" * 20)
 
@@ -19,6 +22,10 @@ def main():
     
     print("Generated HTML:")
     print(html)
+
+    output_file = Path("sample.html")
+    output_file.write_text( html, encoding="utf-8")
+    print(f"Successfully wrote HTML to {output_file}")
 
 if __name__ == "__main__":
     main()
